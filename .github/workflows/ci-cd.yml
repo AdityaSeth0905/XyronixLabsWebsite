@@ -1,0 +1,85 @@
+name: CI/CD Pipeline
+
+# Trigger on push and pull request to main/master branch
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+# Environment variables
+env:
+  NODE_VERSION: 18.x
+
+jobs:
+  # Continuous Integration Job
+  ci:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Checkout repository
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # Setup Node.js
+    - name: Setup Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    # Install dependencies
+    - name: Install Dependencies
+      run: npm ci
+
+    # Run linter
+    - name: Run Linter
+      run: npm run lint
+
+    # Run tests
+    - name: Run Tests
+      run: npm test
+      
+
+    # Build TypeScript project
+    - name: Build Project
+      run: npm run build
+
+  # Continuous Deployment Job
+  cd:
+    needs: ci  # Only run if CI passes
+    runs-on: ubuntu-latest
+    
+    # Only deploy on push to main/master
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # Setup Node.js
+    - name: Setup Node.js ${{ env.NODE_VERSION }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    # Deploy to Render
+    - name: Deploy to Render
+      env:
+        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      run: |
+        curl -X POST $RENDER_DEPLOY_HOOK
+
+  # Optional: Code Quality Checks
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # SonarCloud Code Analysis
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
