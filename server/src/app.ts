@@ -20,7 +20,7 @@ app.use(cors({
   origin: CORS_ORIGINS.length > 0 ? CORS_ORIGINS : '*',
   credentials: true
 }));
-
+//a
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
