@@ -52,7 +52,7 @@
   "include": [
     "src/**/*",                        // Include all files in src directory
     "tests/**/*"                       // Optional: Include test files
-  ],
+, "src/middleware"  ],
 
   // Specify files/folders to exclude
   "exclude": [

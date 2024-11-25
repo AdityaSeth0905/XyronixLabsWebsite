@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: xyronix-labs-frontend
+    name: xyronix-labs-client
     buildCommand: cd client && npm install && npm run build
     startCommand: cd server && npm install && npm start
     envVars:
@@ -8,7 +8,7 @@ services:
         value: production
 
   - type: web
-    name: xyronix-labs-backend
+    name: xyronix-labs-server
     buildCommand: cd server && npm install && npm run build
     startCommand: cd server && npm start
     envVars:

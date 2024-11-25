@@ -11,7 +11,7 @@
     "prepare": "tsc"
   },
   "keywords": [],
-  "author": "",
+  "author": "Aditya Seth",
   "license": "ISC",
   "description": "",
   "dependencies": {
@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
+    "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.9.3",
