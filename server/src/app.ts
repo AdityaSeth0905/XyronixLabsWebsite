@@ -3,18 +3,22 @@ import cors from 'cors';
 import path from 'path';
 import { config } from './config';
 import helmet from 'helmet';
+
 const app = express();
 
 app.use(helmet());
 
-// Cors Configuration
+// Safer CORS Configuration
 const CORS_ORIGINS = [
   'http://localhost:3000',
   process.env.CORS_ORIGIN,
   process.env.RENDER_EXTERNAL_URL,
-  // Your Render-generated URL
-  `https://${process.env.RENDER_SERVICE_NAME}.onrender.com`
-].filter((origin): origin is string => origin !== undefined);
+  process.env.RENDER_SERVICE_NAME 
+    ? `https://${process.env.RENDER_SERVICE_NAME}.onrender.com` 
+    : ''
+].filter((origin): origin is string => 
+  origin !== undefined && origin.trim() !== ''
+);
 
 app.use(cors({
   origin: CORS_ORIGINS.length > 0 ? CORS_ORIGINS : '*',
@@ -24,21 +28,32 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from React app
-const clientBuildPath = path.join(__dirname, '../../frontend/dist');
-app.use(express.static(clientBuildPath));
+// More robust static file serving
+const clientBuildPath = path.resolve(__dirname, '../../frontend/dist');
+console.log('Client Build Path:', clientBuildPath);
 
-// API Routes
-app.get('/api/health', (req, res) => {
+try {
+  app.use(express.static(clientBuildPath));
+} catch (error) {
+  console.error('Error serving static files:', error);
+}
+
+// Health check route
+app.get('/api/health', (_req, res) => {
   res.status(200).json({ 
     status: 'healthy', 
     environment: config.environment 
   });
 });
 
-// Catch-all route to serve React app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(clientBuildPath, 'index.html'));
+// Catch-all route with error handling
+app.get('*', (_req, res) => {
+  try {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  } catch (error) {
+    console.error('Error serving index.html:', error);
+    res.status(500).send('Server error');
+  }
 });
 
 export default app;
