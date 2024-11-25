@@ -43,6 +43,7 @@
       "node",                          // Include Node.js type definitions
       "jest",                          // Optional: Include Jest if using for testing
       "express" ,                      // Optional: Include Express types
+
       "dotenv"
     ]
   },

@@ -3,7 +3,6 @@ import cors from 'cors';
 import path from 'path';
 import { config } from './config';
 import helmet from 'helmet';
-
 const app = express();
 
 app.use(helmet());
