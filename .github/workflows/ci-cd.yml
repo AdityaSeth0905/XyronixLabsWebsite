@@ -1,85 +1,81 @@
 name: CI/CD Pipeline
 
-# Trigger on push and pull request to main/master branch
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
 
-# Environment variables
 env:
   NODE_VERSION: 18.x
 
 jobs:
-  # Continuous Integration Job
-  ci:
+  backend-ci-cd:
     runs-on: ubuntu-latest
     
     steps:
-    # Checkout repository
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # Setup Node.js
     - name: Setup Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
 
-    # Install dependencies
-    - name: Install Dependencies
+    - name: Install Backend Dependencies
+      working-directory: ./backend
       run: npm ci
 
-    # Run linter
-    - name: Run Linter
+    - name: Run Backend Linter
+      working-directory: ./backend
       run: npm run lint
 
-    # Run tests
-    - name: Run Tests
+    - name: Run Backend Tests
+      working-directory: ./backend
       run: npm test
-      
 
-    # Build TypeScript project
-    - name: Build Project
+    - name: Build Backend
+      working-directory: ./backend
       run: npm run build
 
-  # Continuous Deployment Job
-  cd:
-    needs: ci  # Only run if CI passes
+    - name: Deploy Backend to Render
+      env:
+        RENDER_BACKEND_WEBHOOK: ${{ secrets.RENDER_BACKEND_WEBHOOK }}
+      run: |
+        curl -X POST $RENDER_BACKEND_WEBHOOK
+
+  frontend-ci-cd:
     runs-on: ubuntu-latest
-    
-    # Only deploy on push to main/master
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # Setup Node.js
     - name: Setup Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
 
-    # Deploy to Render
-    - name: Deploy to Render
+    - name: Install Frontend Dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Run Frontend Linter
+      working-directory: ./frontend
+      run: npm run lint
+
+    - name: Run Frontend Tests
+      working-directory: ./frontend
+      run: npm test
+
+    - name: Build Frontend
+      working-directory: ./frontend
+      run: npm run build
+
+    - name: Deploy Frontend to Render
       env:
-        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        RENDER_FRONTEND_WEBHOOK: ${{ secrets.RENDER_FRONTEND_WEBHOOK }}
       run: |
-        curl -X POST $RENDER_DEPLOY_HOOK
-
-  # Optional: Code Quality Checks
-  code-quality:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    # SonarCloud Code Analysis
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarcloud-github-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        curl -X POST $RENDER_FRONTEND_WEBHOOK
